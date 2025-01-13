@@ -21,6 +21,8 @@ java -jar .\target\short_links-1.0-SNAPSHOT-jar-with-dependencies.jar
 
 * user - создать пользователя.
 * add link - сократить ссылку.
+* edit link - редактировать ссылку.
+* delete link - удалить ссылку.
 * go to - перейти по короткой ссылке.
 
 После ввода команды следуйте инструкции в консоле.

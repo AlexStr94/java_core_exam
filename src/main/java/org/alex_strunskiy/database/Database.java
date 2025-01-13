@@ -74,7 +74,7 @@ public class Database {
             if (rowsAffected == 1) {
                 return "Ссылка добавлена. По ней можно перейти по ссылки: " + shortLink;
             } else {
-                return "Ссылка уже существует в ссылках пользователя.";
+                return "Не удалось создать короткую ссылку, ошибка базы данных.";
             }
         } catch (SQLException e) {
             return "Не удалось создать короткую ссылку, ошибка базы данных.";
@@ -108,6 +108,24 @@ public class Database {
         }
     }
 
+    public boolean deleteLink(UUID userUUID, String shortLink) {
+        String sql = "delete from public.links \n" +
+                     "where \"user\" = ? and short_link = ?";
+        try (Connection connection = DriverManager.getConnection(databaseUrl);
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+
+            preparedStatement.setObject(1, userUUID);
+            preparedStatement.setString(2, shortLink);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected == 1;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public Link getLink(UUID userUUID, String shortLink) {
         String sql = "SELECT * FROM public.links WHERE \"user\" = ? AND short_link = ?";
         try (Connection connection = DriverManager.getConnection(databaseUrl);
@@ -132,5 +150,4 @@ public class Database {
             return null;
         }
     }
-
 }

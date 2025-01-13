@@ -25,6 +25,8 @@ public class Main {
                 Приветсвуем Вас в программе Великий сокращатель или просто Чик-чик. Вам доступны три команды:
                 user - создать пользователя.
                 add link - сократить ссылку.
+                delete link - удалить ссылку.
+                edit link - редактировать ссылку.
                 go to - перейти по короткой ссылке.
                 """);
 
@@ -35,6 +37,8 @@ public class Main {
                 case "user" -> createUser();
                 case "add link" -> addLink();
                 case "go to" -> goToLink();
+                case "delete link" -> deleteLink();
+                case "edit link" -> editLink();
                 case "" -> System.out.println("Введите команду.");
                 default -> System.out.println("Команда не распознана. Повторите попытку.");
             }
@@ -105,5 +109,36 @@ public class Main {
             System.out.println("Не удалось перейти по ссылке.");
         }
 
+    }
+
+    private static void deleteLink(){
+        System.out.println("Введите uuid пользователя:");
+        UUID userUUID = userInputHandler.getUserUUID();
+        System.out.println("Введите короткую ссылку:");
+        String shortLink = userInputHandler.getShortLink();
+        if (DATABASE.deleteLink(userUUID, shortLink)){
+            System.out.println("Ссылка успешно удалена");
+        } else {
+            System.out.println("Не удалось удалить ссылку, введенные данные не корректны.");
+        }
+    }
+
+    private static void editLink(){
+        System.out.println("Введите uuid пользователя:");
+        UUID userUUID = userInputHandler.getUserUUID();
+
+        System.out.println("Введите короткую ссылку:");
+        String shortLink = userInputHandler.getShortLink();
+
+        Link link = DATABASE.getLink(userUUID, shortLink);
+        if (link == null) {
+            System.out.println("Ссылка не найдена, ошибка базы данных.");
+            return;
+        }
+
+        System.out.println("Задайте новый лимит переходов. Если задаете 0, то кол-во переходов не ограничено.");
+        int newUsageLimit = userInputHandler.getLinkLimit();
+        DATABASE.updateLinkUsageLimit(link.getUuid(), newUsageLimit);
+        System.out.println("Ссылка обновлена.");
     }
 }
