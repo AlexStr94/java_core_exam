@@ -1,11 +1,13 @@
 package org.alex_strunskiy.database;
 
+import org.alex_strunskiy.dataclass.Link;
+
 import java.sql.*;
 import java.util.UUID;
 
 
 public class Database {
-    private String databaseUrl;
+    private final String databaseUrl;
 
     public Database(String databaseUrl) {
         this.databaseUrl = databaseUrl;
@@ -14,29 +16,32 @@ public class Database {
     public void initDatabase() throws SQLException {
         Connection conn = DriverManager.getConnection(this.databaseUrl);
         Statement st = conn.createStatement();
-        st.execute("CREATE TABLE IF NOT EXISTS public.users (\n" +
-                   "\tid uuid NOT NULL,\n" +
-                   "\tCONSTRAINT users_pk PRIMARY KEY (id)\n" +
-                   ");");
+        st.execute("""
+                CREATE TABLE IF NOT EXISTS public.users (
+                \tid uuid NOT NULL,
+                \tCONSTRAINT users_pk PRIMARY KEY (id)
+                );""");
         st.execute(
-                "CREATE TABLE IF NOT EXISTS public.links (\n" +
-                "\tid uuid NOT NULL,\n" +
-                "\tlong_link varchar NOT NULL,\n" +
-                "\tshort_link varchar NOT NULL,\n" +
-                "\t\"user\" uuid NOT NULL,\n" +
-                "\tcreate_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,\n" +
-                "\tusage_limit int4 DEFAULT 0 NOT NULL,\n" +
-                "\tCONSTRAINT links_pk PRIMARY KEY (id),\n" +
-                "\tCONSTRAINT fk_user FOREIGN KEY (\"user\") REFERENCES public.users(id)\n" +
-                ");"
+                """
+                        CREATE TABLE IF NOT EXISTS public.links (
+                        \tid uuid NOT NULL,
+                        \tlong_link varchar NOT NULL,
+                        \tshort_link varchar NOT NULL,
+                        \t"user" uuid NOT NULL,
+                        \tcreate_date timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                        \tusage_limit int4 DEFAULT 0 NOT NULL,
+                        \tCONSTRAINT links_pk PRIMARY KEY (id),
+                        \tCONSTRAINT fk_user FOREIGN KEY ("user") REFERENCES public.users(id)
+                        );"""
         );
         st.close();
     }
 
     public String createUser() {
-        String sql = "INSERT INTO public.users\n" +
-                     "(id)\n" +
-                     "VALUES(gen_random_uuid()) RETURNING id;";
+        String sql = """
+                INSERT INTO public.users
+                (id)
+                VALUES(gen_random_uuid()) RETURNING id;""";
         try (Connection connection = DriverManager.getConnection(databaseUrl);
                  PreparedStatement preparedStatement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
@@ -52,7 +57,7 @@ public class Database {
         }
     }
 
-    public String createLink(String user, String longLink, String shortLink, int limit){
+    public String createLink(UUID userUUID, String longLink, String shortLink, int limit){
         String sql = "INSERT INTO public.links (id, long_link, short_link, \"user\", usage_limit) " +
                      "VALUES (gen_random_uuid(), ?, ?, ?, ?) " +
                      "ON CONFLICT (long_link, \"user\") DO NOTHING";
@@ -60,7 +65,6 @@ public class Database {
         try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            UUID userUUID = UUID.fromString(user);
             preparedStatement.setString(1, longLink);
             preparedStatement.setString(2, shortLink);
             preparedStatement.setObject(3, userUUID);
@@ -104,14 +108,12 @@ public class Database {
         }
     }
 
-    public Object[] getLink(String user, String shortLink) {
+    public Link getLink(UUID userUUID, String shortLink) {
         String sql = "SELECT * FROM public.links WHERE \"user\" = ? AND short_link = ?";
-        Object[] link = new Object[4];
         try (Connection connection = DriverManager.getConnection(databaseUrl);
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
 
-            UUID userUUID = UUID.fromString(user);
             preparedStatement.setObject(1, userUUID);
             preparedStatement.setString(2, shortLink);
 
@@ -122,15 +124,12 @@ public class Database {
                 int limit = result.getInt("usage_limit");
                 Timestamp linkCreated = result.getTimestamp("create_date");
                 String url = result.getString("long_link");
-                link[0] = linkUUID;
-                link[1] = limit;
-                link[2] = linkCreated;
-                link[3] = url;
+                return new Link(linkUUID, limit, linkCreated, url);
             }
-            return link;
+            return null;
 
         } catch (SQLException e) {
-            return link;
+            return null;
         }
     }
 
