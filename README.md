@@ -15,3 +15,12 @@ docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgre
 ```
 java -jar .\target\short_links-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
+
+### Инструкция по работе с консольным приложением.
+В приложение доступно 3 команды:
+
+user - создать пользователя.
+add link - сократить ссылку.
+go to - перейти по короткой ссылке.
+
+После ввода команды следуйте инструкции в консоле.
