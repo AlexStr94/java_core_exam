@@ -35,6 +35,7 @@ public class Main {
                 case "user" -> createUser();
                 case "add link" -> addLink();
                 case "go to" -> goToLink();
+                case "" -> System.out.println("Введите команду.");
                 default -> System.out.println("Команда не распознана. Повторите попытку.");
             }
         }
